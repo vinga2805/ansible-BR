@@ -1,0 +1,43 @@
+---
+- name: Create directory for Solr Index
+  win_file: 
+    path: C:\test\Software\Solr
+    state: directory
+- name: Copy Tssindex zip to remote location
+  win_copy:
+    src: BambooRoseTradeEngines-2016R2-Tssindex.zip 
+    dest: C:\test\software\Solr\
+- name: Extracting the Tssindex file on remote server
+  win_unzip:
+    src: C:\test\software\Solr\BambooRoseTradeEngines-2016R2-Tssindex.zip
+    dest: C:\test\software\Solr\
+- name: Replacing Tssindex war file
+  win_copy:
+    src: C:\test\software\Solr\tssindex.war
+    dest: C:\test\apache-tomcat-8.5.11\webapps\solr.war
+    remote_src: True
+- name: Replacing xml file
+  win_copy:
+    src: tssindex.xml
+    dest: C:\test\apache-tomcat-8.5.11\conf\Catalina\localhost\solr.xml
+- name: Copying Solr configuration folder
+  win_copy: 
+    src: C:\test\software\Solr\indexconf\tomcat\oracle\solr-configuration
+    dest: C:\test\software\Solr\
+    remote_src: True
+- name: Copying ImageMagick file
+  win_copy: 
+    src: ImageMagick-7.0.1-7-Q16-x64-dll.exe
+    dest: C:\test\software\
+- name: Installing ImageMagick
+  win_command: C:\test\software\ImageMagick-7.0.1-7-Q16-x64-dll.exe /silent
+  args:
+    chdir: C:\test\software
+- name: Replacing dataimport.properties file
+  win_copy:
+    src: dataimport.properties
+    dest: C:\test\software\Solr\solr-configuration\conf\
+  notify: restart tomcat8
+
+- name: Start Tomcat8
+  win_service: name=tomcat8 state=started enabled=yes  

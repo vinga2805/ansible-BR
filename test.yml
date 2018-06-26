@@ -1,0 +1,6 @@
+---
+- name: Move file on remote Windows Server from one location to another
+  hosts: win
+  tasks:
+     - name: copy file
+       win_command: Powershell.exe /"Move-Item C/:Users/\vishal.i.WIN2K8/\Desktop/\test.txt C/:/\Users/\vishal.i.WIN2K8/\Desktop/\success.txt/"

@@ -1,0 +1,66 @@
+---
+- name: Create directory on remote server for putting TSSDEMO zip file
+  win_file: 
+    path: C:\test\software 
+    state: directory 
+
+- name: Copy TSSDEMO zip file to reomte server
+  win_copy: 
+    src: BambooRoseTradeEngines-2017R1-Tomcat.zip 
+    dest: C:\test\software\ 
+
+- name: Extract TSSDEMO
+  win_unzip: 
+    src: C:\test\software\BambooRoseTradeEngines-2017R1-Tomcat.zip 
+    dest: C:\test\software\ 
+    creates: C:\test\software\BambooRoseTradeEngines-2017R1 
+
+- name: Replace deploydb.properties file
+  win_copy: 
+    src: deploydb.properties 
+    dest: C:\test\software\
+#- name: Schema creation
+#  copy: src=tssdemo.sql dest=/tmp/tssdemo.sql owner=root group=root
+
+#- name: Creating the required TSSDEMO user
+#  shell: su - oracle -c 'sqlplus / as sysdba @/tmp/tssdemo.sql'
+
+- name: create schema and tables
+  win_shell: C:\test\software\install.bat oracle >>C:\test\software\oracleschema.log
+  args:
+    chdir: C:\test\software
+
+#- name: updating License version
+#  win_shell: "C:\temp\tss_license.sql" | C:\test\software\install.bat license_oracle  >>C:\test\software\oracleupdate.log
+#  args:
+#    chdir: C:\test\software
+
+#- name: Running update
+#  shell: su - oracle -c 'sqlplus / as sysdba @/tmp/update_license.sql'
+
+- name: Copy war file to webapp folder
+  win_copy:
+    src: C:\test\software\TradeEngines-2017R1-Tomcat.war 
+    dest: C:\test\apache-tomcat-8.5.11\webapps\tssdemo.war
+    remote_src: True
+
+- name: Copy jar files to lib folder
+  win_copy:
+    src: "{{ item }}"
+    dest: C:\test\apache-tomcat-8.5.11\lib\
+  with_fileglob:
+    - "/etc/ansible/roles/win_tssdemo/files/*jar"
+
+- name: Ensuring Catalina folder
+  win_file: 
+    path: C:\test\apache-tomcat-8.5.11\conf\Catalina\localhost 
+    state: directory
+
+- name: Copying xml file to Catalina home
+  win_copy: 
+    src: TradeEngines-2017R1-Tomcat.xml 
+    dest: C:\test\apache-tomcat-8.5.11\conf\Catalina\localhost\tssdemo.xml
+  notify: restart tomcat8
+
+- name: Start Tomcat8
+  win_service: name=tomcat8 state=started enabled=yes

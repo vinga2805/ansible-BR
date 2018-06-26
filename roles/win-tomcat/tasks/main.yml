@@ -1,0 +1,152 @@
+---
+# tasks for Installing TOMCAT on Windows######################
+- name: Create remote test directory
+  win_file:
+    path: C:\test
+    state: directory
+
+- name: copy apache tomcat zip to  windows remote.
+  win_copy: 
+      src: apache-tomcat-8.5.11-windows-x64.zip  
+      dest: C:\test\apache-tomcat-8.5.11-windows-x64.zip 
+- name: copy java jdk to  windows remote.
+  win_copy:
+      src: jdk-8u131-windows-x64.exe 
+      dest: C:\test\jdk-8u131-windows-x64.exe
+- name: Install Jdk 8.0
+  win_package: 
+    path: C:\test\jdk-8u131-windows-x64.exe
+    arguments: '/s ADDLOCAL="ToolsFeature,SourceFeature,PublicjreFeature"'
+    product_id: java
+    state: present
+- name: Unzip tomcat
+  win_unzip:
+    src: C:\test\apache-tomcat-8.5.11-windows-x64.zip
+    dest: C:\test\
+    creates: C:\test\apache-tomcat-8.5.11-windows-x64
+- name: Configure Tomcat-users file
+  win_template:
+      src: tomcat-users.xml 
+      dest: C:\test\apache-tomcat-8.5.11\conf\tomcat-users.xml
+
+- name: Configure context.xml file
+  win_template: 
+      src: context.xml 
+      dest: C:\test\apache-tomcat-8.5.11\webapps\manager\META-INF\context.xml
+- name: Setting up environment variables
+  win_path:
+    name: JAVA_HOME
+    elements: C:\Program Files\Java\jdk1.8.0_131
+    state: present
+- name: Setting up environment variables
+  win_path:
+    name: CATALINA_HOME
+    elements: C:\test\apache-tomcat-8.5.11
+    state: present
+- name: Configure tomcat as a service
+  win_shell: C:\test\apache-tomcat-8.5.11\bin\service.bat install  >> c:\somelog.txt
+   
+# Task for Installing TSSDEMO app on TOMCAT##################
+
+- name: Create directory on remote server for putting TSSDEMO zip file
+  win_file: 
+    path: C:\test\TSSDEMO
+    state: directory 
+
+- name: Copy TSSDEMO zip file to reomte server
+  win_copy: 
+    src: BambooRoseTradeEngines-2017R1-Tomcat.zip 
+    dest: C:\test\TSSDEMO\ 
+
+- name: Extract TSSDEMO
+  win_unzip: 
+    src: C:\test\TSSDEMO\BambooRoseTradeEngines-2017R1-Tomcat.zip 
+    dest: C:\test\TSSDEMO\ 
+
+- name: Replace deploydb.properties file
+  win_copy: 
+    src: deploydb.properties 
+    dest: C:\test\TSSDEMO\
+    
+- name: create schema and tables
+  win_shell: C:\test\TSSDEMO\install.bat oracle >>C:\test\TSSDEMO\oracleschema.log
+  args:
+    chdir: C:\test\TSSDEMO
+
+#- name: updating License version
+#  win_shell: "C:\temp\tss_license.sql" | C:\test\TSSDEMO\install.bat license_oracle  >>C:\test\TSSDEMO\oracleupdate.log
+#  args:
+#    chdir: C:\test\TSSDEMO
+
+- name: Copy war file to webapp folder
+  win_copy:
+    src: C:\test\TSSDEMO\TradeEngines-2017R1-Tomcat.war 
+    dest: C:\test\apache-tomcat-8.5.11\webapps\tssdemo.war
+    remote_src: True
+
+- name: Copy jar files to lib folder
+  win_copy:
+    src: "{{ item }}"
+    dest: C:\test\apache-tomcat-8.5.11\lib\
+  with_fileglob:
+    - "/etc/ansible/roles/win_tssdemo/files/*jar"
+
+- name: Ensuring Catalina folder
+  win_file: 
+    path: C:\test\apache-tomcat-8.5.11\conf\Catalina\localhost 
+    state: directory
+
+- name: Copying xml file to Catalina home
+  win_copy: 
+    src: TradeEngines-2017R1-Tomcat.xml 
+    dest: C:\test\apache-tomcat-8.5.11\conf\Catalina\localhost\tssdemo.xml
+
+#Task for ImageMagick#########################################
+- name: Create directory for ImageMagick
+  win_file: 
+    path: C:\test\ImageMagick
+    state: directory
+- name: Copying ImageMagick file
+  win_copy: 
+    src: ImageMagick-7.0.1-7-Q16-x64-dll.exe
+    dest: C:\test\ImageMagick\
+#- name: Installing ImageMagick
+#  win_command: C:\test\ImageMagick\ImageMagick-7.0.1-7-Q16-x64-dll.exe /silent
+#  args:
+#    chdir: C:\test\ImageMagick
+
+# Task for Installing Solr#####################################
+- name: Create directory for Solr Index
+  win_file: 
+    path: C:\test\Solr
+    state: directory
+- name: Copy Tssindex zip to remote location
+  win_copy:
+    src: BambooRoseTradeEngines-2016R2-Tssindex.zip 
+    dest: C:\test\Solr\
+- name: Extracting the Tssindex file on remote server
+  win_unzip:
+    src: C:\test\Solr\BambooRoseTradeEngines-2016R2-Tssindex.zip
+    dest: C:\test\Solr\
+- name: Replacing Tssindex war file
+  win_copy:
+    src: C:\test\Solr\tssindex.war
+    dest: C:\test\apache-tomcat-8.5.11\webapps\solr.war
+    remote_src: True
+- name: Replacing xml file
+  win_copy:
+    src: tssindex.xml
+    dest: C:\test\apache-tomcat-8.5.11\conf\Catalina\localhost\solr.xml
+- name: Copying Solr configuration folder
+  win_copy: 
+    src: C:\test\Solr\indexconf\tomcat\oracle\solr-configuration
+    dest: C:\test\Solr\
+    remote_src: True 
+- name: Replacing dataimport.properties file
+  win_copy:
+    src: dataimport.properties
+    dest: C:\test\Solr\solr-configuration\conf\
+  notify: restart tomcat8
+
+- name: Start Tomcat8
+  win_service: name=tomcat8 state=started enabled=yes

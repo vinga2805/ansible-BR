@@ -1,0 +1,48 @@
+---
+- name: Create directory on remote server for putting TSSDEMO zip file
+  file: path=/root/Linux-Oracle state=directory mode=0755 recurse=yes
+
+- name: Copy TSSDEMO zip file to reomte server
+  copy: src=BambooRoseTradeEngines-2017R1-Tomcat.zip dest=/root/Linux-Oracle/ mode=0755
+
+- name: Extract TSSDEMO
+  unarchive: remote_src=yes src=/root/Linux-Oracle/BambooRoseTradeEngines-2017R1-Tomcat.zip dest=/root/Linux-Oracle/ creates=/root/Linux-Oracle/BambooRoseTradeEngines-2017R1 
+
+- name: Replace deploydb.properties file
+  copy: src=deploydb.properties dest=/root/Linux-Oracle/ mode=0755
+
+- name: Schema creation
+  copy: src=tssdemo.sql dest=/tmp/tssdemo.sql owner=root group=root
+
+- name: Creating the required TSSDEMO user
+  shell: su - oracle -c 'sqlplus / as sysdba @/tmp/tssdemo.sql'
+
+- name: create schema and tables
+  shell: /bin/sh install.sh oracle >>oracleschema.log
+  args:
+    chdir: /root/Linux-Oracle/
+- name: updating License version
+  copy: src=update_license.sql dest=/tmp/update_license.sql owner=root group=root
+- name: Running update
+  shell: su - oracle -c 'sqlplus / as sysdba @/tmp/update_license.sql'
+
+- name: Copy war file to webapp folder
+  command: cp /root/Linux-Oracle/TradeEngines-2017R1-Tomcat.war /opt/apache-tomcat-8.5.24/webapps/tssdemo.war
+
+- name: Copy jar files to lib folder
+  copy:
+    src: "{{ item }}"
+    dest: "/opt/apache-tomcat-8.5.24/lib/"
+    owner: "root"
+    mode: 0775
+  with_fileglob:
+    - "/etc/ansible/roles/tssdemo/files/*jar"
+
+- name: Ensuring Catalina folder
+  file: path=/opt/apache-tomcat-8.5.24/conf/Catalina/localhost/ recurse=yes state=directory
+- name: Copying xml file to Catalina home
+  copy: src=TradeEngines-2017R1-Tomcat.xml dest=/opt/apache-tomcat-8.5.24/conf/Catalina/localhost/tssdemo.xml mode=0775
+  notify: restart tomcat
+
+- name: Start Tomcat
+  service: name=tomcat state=started enabled=yes

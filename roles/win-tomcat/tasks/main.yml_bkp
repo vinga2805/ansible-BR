@@ -1,0 +1,48 @@
+---
+# tasks file for win-tomcat
+- name: Create remote test directory
+  win_file:
+    path: C:\test
+    state: directory
+
+- name: copy apache tomcat zip to  windows remote.
+  win_copy: 
+      src: apache-tomcat-8.5.11-windows-x64.zip  
+      dest: C:\test\apache-tomcat-8.5.11-windows-x64.zip 
+- name: copy java jdk to  windows remote.
+  win_copy:
+      src: jdk-8u131-windows-x64.exe 
+      dest: C:\test\jdk-8u131-windows-x64.exe
+- name: Install Jdk 8.0
+  win_package: 
+    path: C:\test\jdk-8u131-windows-x64.exe
+    arguments: '/s ADDLOCAL="ToolsFeature,SourceFeature,PublicjreFeature"'
+    product_id: java
+    state: present
+- name: Unzip tomcat
+  win_unzip:
+    src: C:\test\apache-tomcat-8.5.11-windows-x64.zip
+    dest: C:\test\
+    creates: C:\test\apache-tomcat-8.5.11-windows-x64
+- name: Configure Tomcat-users file
+  win_template:
+      src: tomcat-users.xml 
+      dest: C:\test\apache-tomcat-8.5.11\conf\tomcat-users.xml
+
+- name: Configure context.xml file
+  win_template: 
+      src: context.xml 
+      dest: C:\test\apache-tomcat-8.5.11\webapps\manager\META-INF\context.xml
+- name: Setting up environment variables
+  win_path:
+    name: JAVA_HOME
+    elements: C:\Program Files\Java\jdk1.8.0_131
+    state: present
+- name: Setting up environment variables
+  win_path:
+    name: CATALINA_HOME
+    elements: C:\test\apache-tomcat-8.5.11
+    state: present
+- name: Configure tomcat as a service
+  win_shell: C:\test\apache-tomcat-8.5.11\bin\service.bat install  >> c:\somelog.txt 
+  notify: restart tomcat8

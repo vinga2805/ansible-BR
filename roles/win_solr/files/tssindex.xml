@@ -1,0 +1,22 @@
+<Context path="/solr">
+	<!--Solr Home location, property solr/home Specify location of Solr Data and Configuration
+ 	This directory will store SOLR configuration and Index data. 
+ 	The size of data directory will grow as more documents are added to index -->
+	<Environment name="solr/home" type="java.lang.String"
+		value="C:\test\software\Solr\solr-configuration" override="true" />
+		
+	<!--Location of TradeStone database. This database connection is used to query data for indexing purpose. -->
+	<!--Here readOnly=true as data import handle issues read only queries -->
+
+	<Resource auth="Container" name="jdbc/tssindex" scope="Unshareable"
+		type="javax.sql.DataSource"  
+		factory="org.apache.commons.dbcp.BasicDataSourceFactory"
+		driverClassName="oracle.jdbc.OracleDriver"
+		url="jdbc:oracle:thin:@testrds.cs7b82gmfmfg.ap-south-1.rds.amazonaws.com:1521:tsswin" 
+		username="tssdemo" 
+		password="stone01" 
+		readOnly="true"
+		 maxWait="10000" maxActive="100" maxIdle="30"
+	/>
+
+</Context>

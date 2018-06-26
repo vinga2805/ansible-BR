@@ -1,0 +1,4 @@
+---
+- name: restart tomcat8
+  win_service: name=tomcat8 state=restarted
+

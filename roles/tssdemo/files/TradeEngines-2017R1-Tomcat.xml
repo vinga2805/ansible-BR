@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context displayName="tssdemo" docBase="tssdemo" path="/tssdemo" workDir="work/Catalina/localhost/tssdemo">
+  <Resource auth="Container" name="jdbc/ds5" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds7" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds9" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds2" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds10" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds1" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds6" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds4" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds3" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container" name="jdbc/ds8" scope="Unshareable" type="javax.sql.DataSource"/>
+  <Resource auth="Container"
+  name="mail/MailSession"
+  type="javax.mail.Session"
+  mail.transport.protocol="smtp"
+  mail.smtp.host=""
+  mail.smtp.port="2525"
+  mail.smtp.user="donotreply@thtfd.com"
+  mail.store.protocol="imaps"
+  mail.imap.port="993"
+  password=""
+  mail.smtp.auth="true"
+  />
+
+  <Resource auth="Container" name="jdbc/default" scope="Unshareable" type="javax.sql.DataSource"
+
+  factory="org.apache.commons.dbcp.BasicDataSourceFactory"
+  maxWait="10000"
+  maxActive="100"
+
+  removeAbandoned="true"
+  removeAbandonedTimeout="300"
+
+  driverClassName="oracle.jdbc.driver.OracleDriver"
+  url="jdbc:oracle:thin:@10.120.120.16:1521:orcl"
+  username="tssdemo"
+  password="stone01"
+
+  />
+</Context>
+
